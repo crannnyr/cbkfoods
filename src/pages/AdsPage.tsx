@@ -1,45 +1,70 @@
 import { useState } from 'react';
 import { Check, Upload, Image, Gift, Palette } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { ADMIN_PAYMENT } from '@/lib/data';
+import { submitAd, uploadImage } from '@/services/api';
+import type { AdType, AdDuration, AdPeriod } from '@/types';
+import { adDurationLabel, adPeriodLabel } from '@/lib/transformers';
 import ImageUploader from '@/components/ImageUploader';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-type AdType = 'image' | 'gif';
-type AdDuration = '5s' | '10s';
-type AdPeriod = '1month' | '2months';
-
-const PRICING = {
-  image: { '5s': 6000, '10s': 12000 },
-  gif: { '5s': 10000, '10s': 20000 },
-  custom: 5000,
+const PRICING: Record<AdType, Record<AdDuration, number>> = {
+  image: { '5_seconds': 6000, '10_seconds': 12000 },
+  gif: { '5_seconds': 10000, '10_seconds': 20000 },
 };
+const CUSTOM_PRICE = 5000;
 
 export default function AdsPage() {
-  const { addToast } = useStore();
+  const { addToast, paymentDetails } = useStore();
   const [form, setForm] = useState({
     name: '', email: '', phone: '',
     adType: 'image' as AdType,
-    duration: '5s' as AdDuration,
-    period: '1month' as AdPeriod,
+    duration: '5_seconds' as AdDuration,
+    period: '1_month' as AdPeriod,
     customCreation: false,
     linkUrl: '',
   });
   const [proofFile, setProofFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const totalPrice = (PRICING[form.adType][form.duration] * (form.period === '2months' ? 2 : 1)) + (form.customCreation ? PRICING.custom : 0);
+  const totalPrice = (PRICING[form.adType][form.duration] * (form.period === '2_months' ? 2 : 1)) + (form.customCreation ? CUSTOM_PRICE : 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.phone || !form.linkUrl) { addToast('error', 'Please fill in all required fields'); return; }
     if (!proofFile) { addToast('error', 'Please upload payment proof'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
+    try {
+      let paymentProofUrl: string | undefined;
+      if (proofFile) {
+        const ext = proofFile.name.split('.').pop();
+        paymentProofUrl = await uploadImage('payment-proofs', `ads/${Date.now()}.${ext}`, proofFile);
+      }
+      let mediaUrl: string | undefined;
+      if (mediaFile && !form.customCreation) {
+        const ext = mediaFile.name.split('.').pop();
+        mediaUrl = await uploadImage('ads-media', `ads/${Date.now()}.${ext}`, mediaFile);
+      }
+      await submitAd({
+        advertiserName: form.name,
+        advertiserEmail: form.email,
+        advertiserPhone: form.phone,
+        mediaType: form.adType,
+        duration: form.duration,
+        period: form.period,
+        customCreation: form.customCreation,
+        amountPaid: totalPrice,
+        paymentProofUrl,
+        mediaUrl,
+      });
+      addToast('success', 'Ad submitted for review!');
+      setForm({ name: '', email: '', phone: '', adType: 'image', duration: '5_seconds', period: '1_month', customCreation: false, linkUrl: '' });
+      setProofFile(null);
+      setMediaFile(null);
+    } catch {
+      addToast('error', 'Failed to submit ad. Please try again.');
+    }
     setLoading(false);
-    addToast('success', 'Ad submitted for review!');
-    setForm({ name: '', email: '', phone: '', adType: 'image', duration: '5s', period: '1month', customCreation: false, linkUrl: '' });
-    setProofFile(null);
   };
 
   const steps = [
@@ -76,32 +101,30 @@ export default function AdsPage() {
         {/* Pricing */}
         <div className="grid md:grid-cols-3 gap-4 mb-12">
           {[
-            { type: 'image' as AdType, title: 'Image Ad', prices: { '5s': 6000, '10s': 12000 }, desc: 'Static image banner', featured: false },
-            { type: 'gif' as AdType, title: 'GIF Ad', prices: { '5s': 10000, '10s': 20000 }, desc: 'Animated GIF banner', featured: true },
-            { type: 'custom' as any, title: 'Custom Creation', prices: { '5s': 5000, '10s': 5000 }, desc: 'We design for you', featured: false },
+            { type: 'image' as AdType, title: 'Image Ad', desc: 'Static image banner', featured: false },
+            { type: 'gif' as AdType, title: 'GIF Ad', desc: 'Animated GIF banner', featured: true },
           ].map(plan => (
             <div key={plan.title} className={`card p-6 text-center ${plan.featured ? 'ring-2 ring-[#FF6B35]' : ''}`}>
               {plan.featured && <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>Most Popular</span>}
               <h3 className="font-bold text-lg mt-2" style={{ color: 'var(--text-primary)' }}>{plan.title}</h3>
               <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>{plan.desc}</p>
-              {plan.type !== 'custom' ? (
-                <>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--text-secondary)' }}>5s / month</span>
-                      <span className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>N{plan.prices['5s'].toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--text-secondary)' }}>10s / month</span>
-                      <span className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>N{plan.prices['10s'].toLocaleString()}</span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="font-mono font-bold text-xl mb-4" style={{ color: 'var(--text-primary)' }}>N5,000</p>
-              )}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: 'var(--text-secondary)' }}>5s / month</span>
+                  <span className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>N{PRICING[plan.type]['5_seconds'].toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: 'var(--text-secondary)' }}>10s / month</span>
+                  <span className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>N{PRICING[plan.type]['10_seconds'].toLocaleString()}</span>
+                </div>
+              </div>
             </div>
           ))}
+          <div className="card p-6 text-center">
+            <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Custom Creation</h3>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>We design for you</p>
+            <p className="font-mono font-bold text-xl mb-4" style={{ color: 'var(--text-primary)' }}>N{CUSTOM_PRICE.toLocaleString()}</p>
+          </div>
         </div>
 
         {/* How It Works */}
@@ -164,7 +187,7 @@ export default function AdsPage() {
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Duration per rotation</label>
               <div className="flex gap-3">
-                {(['5s', '10s'] as AdDuration[]).map(d => (
+                {(['5_seconds', '10_seconds'] as AdDuration[]).map(d => (
                   <button key={d} type="button" onClick={() => setForm({ ...form, duration: d })}
                     className="flex-1 py-3 rounded-lg text-sm font-medium transition-all border-2"
                     style={{
@@ -172,7 +195,7 @@ export default function AdsPage() {
                       background: form.duration === d ? 'var(--primary-light)' : 'transparent',
                       color: form.duration === d ? 'var(--primary)' : 'var(--text-secondary)',
                     }}>
-                    {d}
+                    {adDurationLabel(d)}
                   </button>
                 ))}
               </div>
@@ -182,7 +205,7 @@ export default function AdsPage() {
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Period</label>
               <div className="flex gap-3">
-                {(['1month', '2months'] as AdPeriod[]).map(p => (
+                {(['1_month', '2_months'] as AdPeriod[]).map(p => (
                   <button key={p} type="button" onClick={() => setForm({ ...form, period: p })}
                     className="flex-1 py-3 rounded-lg text-sm font-medium transition-all border-2"
                     style={{
@@ -190,7 +213,7 @@ export default function AdsPage() {
                       background: form.period === p ? 'var(--primary-light)' : 'transparent',
                       color: form.period === p ? 'var(--primary)' : 'var(--text-secondary)',
                     }}>
-                    {p === '1month' ? '1 Month' : '2 Months'}
+                    {adPeriodLabel(p)}
                   </button>
                 ))}
               </div>
@@ -215,7 +238,7 @@ export default function AdsPage() {
             {!form.customCreation && (
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Ad Media</label>
-                <ImageUploader onImageSelect={() => {}} />
+                <ImageUploader onImageSelect={(file) => { setMediaFile(file); }} />
               </div>
             )}
 
@@ -223,9 +246,11 @@ export default function AdsPage() {
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Payment Proof *</label>
               <ImageUploader onImageSelect={(file) => { setProofFile(file); }} />
-              <div className="mt-2 p-3 rounded-lg text-xs" style={{ background: 'var(--surface-elevated)' }}>
-                <p style={{ color: 'var(--text-muted)' }}>Pay to: {ADMIN_PAYMENT.bankName} | {ADMIN_PAYMENT.accountNumber} | {ADMIN_PAYMENT.accountName}</p>
-              </div>
+              {paymentDetails && (
+                <div className="mt-2 p-3 rounded-lg text-xs" style={{ background: 'var(--surface-elevated)' }}>
+                  <p style={{ color: 'var(--text-muted)' }}>Pay to: {paymentDetails.bankName} | {paymentDetails.accountNumber} | {paymentDetails.accountName}</p>
+                </div>
+              )}
             </div>
 
             {/* Link */}

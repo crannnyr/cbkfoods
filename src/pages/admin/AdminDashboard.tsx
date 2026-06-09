@@ -1,11 +1,10 @@
 import { TrendingUp, TrendingDown, ShoppingBag, DollarSign, Clock, Megaphone } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { MOCK_ORDERS, MOCK_ADS } from '@/lib/data';
 import AdminLayout from './AdminLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
 export default function AdminDashboard() {
-  const { orders } = useStore();
+  const { orders, ads } = useStore();
   const todayOrders = orders.filter(o => o.createdAt.startsWith(new Date().toISOString().slice(0, 10)));
   const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
   const pendingCount = orders.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status)).length;
@@ -14,7 +13,7 @@ export default function AdminDashboard() {
     { label: "Today's Orders", value: todayOrders.length.toString(), change: '+12%', up: true, icon: ShoppingBag, color: '#FF6B35' },
     { label: "Revenue", value: `N${todayRevenue.toLocaleString()}`, change: '+8%', up: true, icon: DollarSign, color: '#00D26A' },
     { label: "Pending Orders", value: pendingCount.toString(), change: '-3', up: false, icon: Clock, color: '#FFA502' },
-    { label: "Active Ads", value: MOCK_ADS.filter(a => a.status === 'active').length.toString(), change: '0', up: true, icon: Megaphone, color: '#3B82F6' },
+    { label: "Active Ads", value: ads.filter(a => a.status === 'active').length.toString(), change: '0', up: true, icon: Megaphone, color: '#3B82F6' },
   ];
 
   const salesData = [
@@ -88,7 +87,7 @@ export default function AdminDashboard() {
         <div className="card p-4">
           <h3 className="font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Recent Orders</h3>
           <div className="space-y-2">
-            {MOCK_ORDERS.slice(0, 5).map(o => (
+            {orders.slice(0, 5).map(o => (
               <div key={o.id} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'var(--surface)' }}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{o.orderNumber}</p>

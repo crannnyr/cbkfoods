@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import type { FoodItem } from '@/types';
 import { useStore } from '@/store/useStore';
-import { getDeliveryLabel, getDeliveryColor } from '@/lib/data';
+import { deliveryLabel, deliveryColor } from '@/lib/transformers';
 
 interface Props {
   item: FoodItem;
@@ -29,8 +29,8 @@ export default function FoodCard({ item }: Props) {
           loading="lazy"
         />
         {/* Delivery badge */}
-        <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium ${getDeliveryColor(item.deliveryTime)}`}>
-          {getDeliveryLabel(item.deliveryTime)}
+        <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium ${deliveryColor(item.deliveryTime)}`}>
+          {deliveryLabel(item.deliveryTime)}
         </span>
         {/* Owner badge */}
         <span className={`absolute top-2 right-2 ${ownerClass}`}>

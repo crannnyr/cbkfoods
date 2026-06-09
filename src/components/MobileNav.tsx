@@ -1,19 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, ShoppingCart, ClipboardList, User } from 'lucide-react';
+import { Hop as Home, Grid3x2 as Grid3X3, ShoppingCart, ClipboardList, User } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-
-const tabs = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: Grid3X3, label: 'Categories', path: '/category/rice-dishes' },
-  { icon: ShoppingCart, label: 'Cart', path: '/cart' },
-  { icon: ClipboardList, label: 'Orders', path: '/orders' },
-  { icon: User, label: 'Profile', path: '/profile' },
-];
 
 export default function MobileNav() {
   const location = useLocation();
   const cartCount = useStore(s => s.cartCount);
+  const categories = useStore(s => s.categories);
   const count = cartCount();
+  const categoryPath = categories.length > 0 ? `/category/${categories[0].slug}` : '/';
+
+  const tabs = [
+    { icon: Home, label: 'Home', path: '/' },
+    { icon: Grid3X3, label: 'Categories', path: categoryPath },
+    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
+    { icon: ClipboardList, label: 'Orders', path: '/orders' },
+    { icon: User, label: 'Profile', path: '/profile' },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t"

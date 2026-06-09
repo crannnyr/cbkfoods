@@ -1,7 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, MapPin, Phone, FileText, Package, Clock, CheckCircle, XCircle, User } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, FileText, Package, Clock, CircleCheck as CheckCircle, Circle as XCircle, User } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { ADMIN_PAYMENT } from '@/lib/data';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
 const statusIcons: Record<string, any> = {
@@ -15,7 +14,7 @@ const statusLabels: Record<string, string> = {
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { orders, addToast } = useStore();
+  const { orders, addToast, paymentDetails } = useStore();
   const order = orders.find(o => o.id === id);
 
   if (!order) {
@@ -137,11 +136,11 @@ export default function OrderDetailPage() {
               {order.paymentStatus.toUpperCase()}
             </span>
           </div>
-          {order.paymentStatus === 'pending' && (
+          {order.paymentStatus === 'pending' && paymentDetails && (
             <div className="mt-3 p-3 rounded-lg text-xs" style={{ background: 'var(--surface-elevated)' }}>
-              <p style={{ color: 'var(--text-secondary)' }}>Bank: {ADMIN_PAYMENT.bankName}</p>
-              <p style={{ color: 'var(--text-secondary)' }}>Acct: {ADMIN_PAYMENT.accountNumber}</p>
-              <p style={{ color: 'var(--text-secondary)' }}>Name: {ADMIN_PAYMENT.accountName}</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Bank: {paymentDetails.bankName}</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Acct: {paymentDetails.accountNumber}</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Name: {paymentDetails.accountName}</p>
             </div>
           )}
         </div>

@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { ADMIN_PAYMENT } from '@/lib/data';
 
 export default function CartDrawer() {
   const navigate = useNavigate();
   const { cartItems, isCartOpen, setCartOpen, updateQuantity, removeFromCart, cartTotal } = useStore();
   const subtotal = cartTotal();
-  const deliveryFee = cartItems.length > 0 ? ADMIN_PAYMENT ? 500 : 0 : 0;
+  const deliveryFee = cartItems.length > 0 ? 500 : 0;
   const total = subtotal + deliveryFee;
 
   if (!isCartOpen) return null;

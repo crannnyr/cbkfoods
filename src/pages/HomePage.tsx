@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Leaf, Clock, Tag, Heart, ArrowRight } from 'lucide-react';
-import { CATEGORIES, FOOD_ITEMS, FEATURED_ITEMS, BANNERS } from '@/lib/data';
+import { useStore } from '@/store/useStore';
 import FoodCard from '@/components/FoodCard';
 import SkeletonCard from '@/components/SkeletonCard';
 
 /* ============ Hero Slider ============ */
 function HeroSlider() {
   const [current, setCurrent] = useState(0);
-  const banners = BANNERS;
+  const banners = useStore(s => s.banners);
 
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -62,6 +62,7 @@ function HeroSlider() {
 /* ============ Categories ============ */
 function CategoryGrid() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const categories = useStore(s => s.categories);
 
   return (
     <section className="py-10 px-4">
@@ -70,7 +71,7 @@ function CategoryGrid() {
         <div ref={scrollRef}
           className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <Link
               key={cat.id}
               to={`/category/${cat.slug}`}
@@ -94,6 +95,7 @@ function CategoryGrid() {
 /* ============ Featured Items ============ */
 function FeaturedSection() {
   const [loading, setLoading] = useState(true);
+  const featuredItems = useStore(s => s.featuredItems);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 600);
@@ -115,7 +117,7 @@ function FeaturedSection() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {FEATURED_ITEMS.map(item => <FoodCard key={item.id} item={item} />)}
+            {featuredItems.map(item => <FoodCard key={item.id} item={item} />)}
           </div>
         )}
       </div>
@@ -145,6 +147,7 @@ function AdBannerSection() {
 function PopularItems() {
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const items = useStore(s => s.items);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -164,7 +167,7 @@ function PopularItems() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {FOOD_ITEMS.slice(0, 8).map(item => <FoodCard key={item.id} item={item} />)}
+            {items.slice(0, 8).map(item => <FoodCard key={item.id} item={item} />)}
           </div>
         )}
       </div>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Phone, User, FileText, Upload, CheckCircle } from 'lucide-react';
+import { MapPin, Phone, User, FileText, Upload, CircleCheck as CheckCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { ADMIN_PAYMENT } from '@/lib/data';
+import { createOrder } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cartItems, cartTotal, clearCart, addOrder, addToast } = useStore();
+  const { cartItems, cartTotal, clearCart, addOrder, addToast, paymentDetails } = useStore();
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [loading, setLoading] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -24,37 +24,34 @@ export default function CheckoutPage() {
       return;
     }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
-    const onum = `CBK-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 999).toString().padStart(3, '0')}`;
-    setOrderNumber(onum);
-    addOrder({
-      id: Date.now().toString(),
-      orderNumber: onum,
-      userId: 'user1',
-      userName: form.fullName,
-      userPhone: form.phone,
-      userAddress: form.address,
-      items: cartItems.map(c => ({
-        itemId: c.itemId,
-        name: c.name,
-        price: c.price,
-        quantity: c.quantity,
-        image: c.image,
-        owner: c.owner,
-        specialInstructions: c.specialInstructions,
-      })),
-      subtotal,
-      deliveryFee,
-      total,
-      status: 'pending',
-      paymentStatus: 'pending',
-      deliveryNotes: form.notes,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    clearCart();
+    try {
+      const user = useStore.getState().user;
+      if (!user) { addToast('error', 'Please sign in to place an order'); setLoading(false); return; }
+      const order = await createOrder({
+        userId: user.userId,
+        deliveryAddress: form.address,
+        deliveryPhone: form.phone,
+        deliveryNotes: form.notes || undefined,
+        items: cartItems.map(c => ({
+          itemId: c.itemId,
+          name: c.name,
+          price: c.price,
+          costPrice: 0,
+          quantity: c.quantity,
+          owner: c.owner,
+          specialInstructions: c.specialInstructions,
+        })),
+        totalAmount: total,
+      });
+      addOrder(order);
+      setOrderNumber(order.orderNumber);
+      clearCart();
+      setStep('success');
+      addToast('success', 'Order placed successfully!');
+    } catch {
+      addToast('error', 'Failed to place order. Please try again.');
+    }
     setLoading(false);
-    setStep('success');
     addToast('success', 'Order placed successfully!');
   };
 
@@ -73,9 +70,9 @@ export default function CheckoutPage() {
           <div className="card p-6 text-left mb-6">
             <h3 className="font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Bank Transfer Details</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Account Name:</span><span style={{ color: 'var(--text-primary)' }}>{ADMIN_PAYMENT.accountName}</span></div>
-              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Account Number:</span><span className="font-mono" style={{ color: 'var(--text-primary)' }}>{ADMIN_PAYMENT.accountNumber}</span></div>
-              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Bank:</span><span style={{ color: 'var(--text-primary)' }}>{ADMIN_PAYMENT.bankName}</span></div>
+              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Account Name:</span><span style={{ color: 'var(--text-primary)' }}>{paymentDetails?.accountName || 'N/A'}</span></div>
+              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Account Number:</span><span className="font-mono" style={{ color: 'var(--text-primary)' }}>{paymentDetails?.accountNumber || 'N/A'}</span></div>
+              <div className="flex justify-between"><span style={{ color: 'var(--text-secondary)' }}>Bank:</span><span style={{ color: 'var(--text-primary)' }}>{paymentDetails?.bankName || 'N/A'}</span></div>
               <div className="flex justify-between font-bold pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
                 <span style={{ color: 'var(--text-primary)' }}>Amount:</span>
                 <span className="font-mono" style={{ color: 'var(--primary)' }}>N{total.toLocaleString()}</span>
@@ -158,7 +155,7 @@ export default function CheckoutPage() {
               <div className="p-4 rounded-xl border-2" style={{ borderColor: 'var(--primary)', background: 'var(--primary-light)' }}>
                 <p className="font-medium" style={{ color: 'var(--primary)' }}>Bank Transfer</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  Pay to: {ADMIN_PAYMENT.accountName} | {ADMIN_PAYMENT.bankName} | {ADMIN_PAYMENT.accountNumber}
+                  Pay to: {paymentDetails?.accountName || 'N/A'} | {paymentDetails?.bankName || 'N/A'} | {paymentDetails?.accountNumber || 'N/A'}
                 </p>
               </div>
             </div>

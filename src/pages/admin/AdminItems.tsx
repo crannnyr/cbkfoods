@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Search, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { FOOD_ITEMS, CATEGORIES } from '@/lib/data';
 import type { FoodItem, Owner } from '@/types';
 import AdminLayout from './AdminLayout';
 import ImageUploader from '@/components/ImageUploader';
@@ -13,7 +12,7 @@ const initialForm: Partial<FoodItem> = {
 };
 
 export default function AdminItems() {
-  const { addToast } = useStore();
+  const { addToast, items, categories } = useStore();
   const [search, setSearch] = useState('');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
@@ -21,7 +20,7 @@ export default function AdminItems() {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
 
-  const filtered = FOOD_ITEMS.filter(i => {
+  const filtered = items.filter(i => {
     const matchesSearch = i.name.toLowerCase().includes(search.toLowerCase());
     const matchesOwner = ownerFilter === 'all' || i.owner === ownerFilter;
     return matchesSearch && matchesOwner;
@@ -148,7 +147,7 @@ export default function AdminItems() {
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Category</label>
                   <select value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="input-field">
-                    {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>

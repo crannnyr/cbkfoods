@@ -21,6 +21,8 @@ export default function LoginPage() {
     if (success) {
       addToast('success', 'Welcome back!');
       navigate('/');
+    } else {
+      addToast('error', 'Invalid email or password');
     }
   };
 

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { MOCK_ORDERS } from '@/lib/data';
 import type { Order, OrderStatus } from '@/types';
 import AdminLayout from './AdminLayout';
 import { useStore } from '@/store/useStore';
@@ -13,20 +12,20 @@ const statusClasses: Record<string, string> = {
 };
 
 export default function AdminOrders() {
-  const { addToast } = useStore();
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const { addToast, orders } = useStore();
+  const [ordersList, setOrdersList] = useState<Order[]>(orders);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const filtered = orders.filter(o => {
+  const filtered = ordersList.filter(o => {
     const matchesSearch = o.orderNumber.toLowerCase().includes(search.toLowerCase()) || o.userName.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(os => os.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    setOrdersList(os => os.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     addToast('success', `Order status updated to ${newStatus}`);
   };
 

@@ -1,49 +1,48 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, X, GripVertical } from 'lucide-react';
-import { CATEGORIES } from '@/lib/data';
 import type { Category } from '@/types';
 import AdminLayout from './AdminLayout';
 import ImageUploader from '@/components/ImageUploader';
 import { useStore } from '@/store/useStore';
 
 export default function AdminCategories() {
-  const { addToast } = useStore();
-  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const { addToast, categories } = useStore();
+  const [categoriesList, setCategoriesList] = useState<Category[]>(categories);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', displayOrder: 1 });
 
-  const openAdd = () => { setEditing(null); setForm({ name: '', displayOrder: categories.length + 1 }); setShowModal(true); };
+  const openAdd = () => { setEditing(null); setForm({ name: '', displayOrder: categoriesList.length + 1 }); setShowModal(true); };
   const openEdit = (cat: Category) => { setEditing(cat); setForm({ name: cat.name, displayOrder: cat.displayOrder }); setShowModal(true); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
-      setCategories(cats => cats.map(c => c.id === editing.id ? { ...c, ...form } : c));
+      setCategoriesList(cats => cats.map(c => c.id === editing.id ? { ...c, ...form } : c));
     } else {
       const slug = form.name.toLowerCase().replace(/\s+/g, '-');
-      setCategories(cats => [...cats, { id: `new-${Date.now()}`, ...form, slug, image: '/images/cat-rice.jpg' }]);
+      setCategoriesList(cats => [...cats, { id: `new-${Date.now()}`, ...form, slug, image: '/images/cat-rice.jpg' }]);
     }
     setShowModal(false);
     addToast('success', editing ? 'Category updated' : 'Category created');
   };
 
   const handleDelete = (id: string) => {
-    setCategories(cats => cats.filter(c => c.id !== id));
+    setCategoriesList(cats => cats.filter(c => c.id !== id));
     addToast('success', 'Category deleted');
   };
 
   return (
     <AdminLayout title="Categories">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{categories.length} categories</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{categoriesList.length} categories</p>
         <button onClick={openAdd} className="btn-primary flex items-center gap-2 py-2.5 px-4">
           <Plus size={16} /> Add Category
         </button>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map(cat => (
+        {categoriesList.map(cat => (
           <div key={cat.id} className="card p-4 flex items-center gap-4 group">
             <GripVertical size={16} style={{ color: 'var(--text-muted)' }} className="cursor-grab" />
             <img src={cat.image} alt={cat.name} className="w-14 h-14 rounded-full object-cover flex-shrink-0" />

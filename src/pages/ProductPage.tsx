@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
-import { getItemBySlug, getRelatedItems } from '@/lib/data';
 import { useStore } from '@/store/useStore';
-import { getDeliveryLabel, getDeliveryColor } from '@/lib/data';
+import { deliveryLabel, deliveryColor } from '@/lib/transformers';
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
-  const item = getItemBySlug(slug || '');
+  const items = useStore(s => s.items);
+  const addToCart = useStore(s => s.addToCart);
+  const item = items.find(i => i.slug === slug);
   const [qty, setQty] = useState(1);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const addToCart = useStore(s => s.addToCart);
 
   if (!item) {
     return (
@@ -21,7 +21,7 @@ export default function ProductPage() {
     );
   }
 
-  const related = getRelatedItems(item.id, item.categoryId);
+  const related = items.filter(i => i.categoryId === item.categoryId && i.id !== item.id).slice(0, 4);
   const ownerClass = item.owner === 'ebube' ? 'owner-badge-ebube' : item.owner === 'bundu' ? 'owner-badge-bundu' : 'owner-badge-joint';
   const ownerLabel = item.owner.charAt(0).toUpperCase() + item.owner.slice(1);
 
@@ -38,8 +38,8 @@ export default function ProductPage() {
           <ChevronLeft size={20} />
         </Link>
         <span className={`absolute top-4 right-4 ${ownerClass}`}>{ownerLabel}</span>
-        <span className={`absolute top-4 left-14 px-2 py-0.5 rounded-full text-xs font-medium ${getDeliveryColor(item.deliveryTime)}`}>
-          {getDeliveryLabel(item.deliveryTime)}
+        <span className={`absolute top-4 left-14 px-2 py-0.5 rounded-full text-xs font-medium ${deliveryColor(item.deliveryTime)}`}>
+          {deliveryLabel(item.deliveryTime)}
         </span>
       </div>
 

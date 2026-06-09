@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, SlidersHorizontal } from 'lucide-react';
-import { getCategoryBySlug, getItemsByCategory } from '@/lib/data';
+import { useStore } from '@/store/useStore';
 import type { FoodItem } from '@/types';
 import FoodCard from '@/components/FoodCard';
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const category = getCategoryBySlug(slug || '');
-  const items = category ? getItemsByCategory(category.id) : [];
-  const [filter, setFilter] = useState<'all' | 'instant' | '24hrs' | '1week'>('all');
+  const categories = useStore(s => s.categories);
+  const storeItems = useStore(s => s.items);
+  const category = categories.find(c => c.slug === slug);
+  const items = category ? storeItems.filter(i => i.categoryId === category.id) : [];
+  const [filter, setFilter] = useState<'all' | 'instant' | '2_hours' | '6_hours' | '24_hours' | '3_days' | '1_week'>('all');
   const [sort, setSort] = useState<'popular' | 'price-low' | 'price-high' | 'newest'>('popular');
 
   const filtered: FoodItem[] = items
@@ -52,8 +54,11 @@ export default function CategoryPage() {
             {[
               { key: 'all' as const, label: 'All' },
               { key: 'instant' as const, label: 'Instant' },
-              { key: '24hrs' as const, label: '24hrs' },
-              { key: '1week' as const, label: '1 Week' },
+              { key: '2_hours' as const, label: '2 Hours' },
+              { key: '6_hours' as const, label: '6 Hours' },
+              { key: '24_hours' as const, label: '24 Hours' },
+              { key: '3_days' as const, label: '3 Days' },
+              { key: '1_week' as const, label: '1 Week' },
             ].map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)}
                 className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all"

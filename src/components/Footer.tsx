@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
-import { SITE_SETTINGS } from '@/lib/data';
+
+const SITE = {
+  contactPhone: '08031234567',
+  contactWhatsApp: '08039876543',
+  contactEmail: 'hello@cbkfoods.online',
+  socialInstagram: '@cbkfoods',
+  socialFacebook: 'CBKFoods',
+  socialTwitter: '@cbkfoods',
+};
 
 export default function Footer() {
-  const ss = SITE_SETTINGS;
+  const ss = SITE;
   
   return (
     <footer className="mt-auto" style={{ background: 'var(--surface-elevated)' }}>

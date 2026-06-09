@@ -1,7 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useStore } from '@/store/useStore';
-import { FOOD_ITEMS, MOCK_ORDERS } from '@/lib/data';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import MobileNav from '@/components/MobileNav';
@@ -31,16 +30,14 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
 
 function AppInitializer({ children }: { children: React.ReactNode }) {
-  const setOrders = useStore(s => s.setOrders);
-  
+  const initAuth = useStore(s => s.initAuth);
+  const loadData = useStore(s => s.loadData);
+
   useEffect(() => {
-    // Load mock orders on init
-    setOrders(MOCK_ORDERS);
-    
-    // Load food items into window for global access
-    (window as any).__FOOD_ITEMS = FOOD_ITEMS;
-  }, [setOrders]);
-  
+    initAuth();
+    loadData();
+  }, [initAuth, loadData]);
+
   return <>{children}</>;
 }
 

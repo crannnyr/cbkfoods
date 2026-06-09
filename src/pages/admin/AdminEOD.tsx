@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle, Calendar } from 'lucide-react';
-import { MOCK_DAY_CLOSINGS, MOCK_ORDERS } from '@/lib/data';
+import { TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Calendar } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { useStore } from '@/store/useStore';
 
 export default function AdminEOD() {
-  const { addToast } = useStore();
+  const { addToast, orders, dayClosings } = useStore();
   const [showConfirm, setShowConfirm] = useState(false);
   const [closed, setClosed] = useState(false);
-  const todayOrders = MOCK_ORDERS.filter(o => o.createdAt.startsWith(new Date().toISOString().slice(0, 10)));
+  const todayOrders = orders.filter(o => o.createdAt.startsWith(new Date().toISOString().slice(0, 10)));
   const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
 
   const ebubeOrders = todayOrders.filter(o => o.items.some(i => i.owner === 'ebube'));
@@ -44,7 +43,7 @@ export default function AdminEOD() {
                 <th className="text-left p-3 font-medium" style={{ color: 'var(--text-secondary)' }}>Profit</th>
               </tr></thead>
               <tbody>
-                {MOCK_DAY_CLOSINGS.map(dc => (
+                {dayClosings.map(dc => (
                   <tr key={dc.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
                     <td className="p-3">{dc.date}</td>
                     <td className="p-3">{dc.totalOrders}</td>

@@ -1,31 +1,30 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye } from 'lucide-react';
-import { MOCK_ADS } from '@/lib/data';
+import { CircleCheck as CheckCircle, Circle as XCircle, Eye } from 'lucide-react';
 import type { AdSubmission, AdStatus } from '@/types';
 import AdminLayout from './AdminLayout';
 import { useStore } from '@/store/useStore';
 
-const filters: (AdStatus | 'all')[] = ['all', 'pending', 'approved', 'rejected', 'active', 'expired'];
+const filters: (AdStatus | 'all')[] = ['all', 'pending_review', 'approved', 'rejected', 'active', 'expired'];
 
 export default function AdminAds() {
-  const { addToast } = useStore();
-  const [ads, setAds] = useState<AdSubmission[]>(MOCK_ADS);
+  const { addToast, ads } = useStore();
+  const [adsList, setAdsList] = useState<AdSubmission[]>(ads);
   const [activeFilter, setActiveFilter] = useState<AdStatus | 'all'>('all');
   const [preview, setPreview] = useState<AdSubmission | null>(null);
 
-  const filtered = activeFilter === 'all' ? ads : ads.filter(a => a.status === activeFilter);
+  const filtered = activeFilter === 'all' ? adsList : adsList.filter(a => a.status === activeFilter);
 
   const handleApprove = (id: string) => {
-    setAds(as => as.map(a => a.id === id ? { ...a, status: 'active' as AdStatus, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 30 * 86400000).toISOString() } : a));
+    setAdsList(as => as.map(a => a.id === id ? { ...a, status: 'active' as AdStatus, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 30 * 86400000).toISOString() } : a));
     addToast('success', 'Ad approved and activated');
   };
   const handleReject = (id: string) => {
-    setAds(as => as.map(a => a.id === id ? { ...a, status: 'rejected' as AdStatus, rejectionReason: 'Does not meet guidelines' } : a));
+    setAdsList(as => as.map(a => a.id === id ? { ...a, status: 'rejected' as AdStatus, rejectionReason: 'Does not meet guidelines' } : a));
     addToast('error', 'Ad rejected');
   };
 
   const statusClasses: Record<string, string> = {
-    pending: 'status-pending', approved: 'status-confirmed', rejected: 'status-cancelled',
+    pending_review: 'status-pending', approved: 'status-confirmed', rejected: 'status-cancelled',
     active: 'status-delivered', expired: 'status-cancelled',
   };
 
@@ -37,7 +36,7 @@ export default function AdminAds() {
           <button key={f} onClick={() => setActiveFilter(f)}
             className="px-4 py-2 rounded-lg text-sm font-medium capitalize whitespace-nowrap transition-all"
             style={{ background: activeFilter === f ? 'var(--primary)' : 'var(--surface)', color: activeFilter === f ? '#fff' : 'var(--text-secondary)' }}>
-            {f} ({f === 'all' ? ads.length : ads.filter(a => a.status === f).length})
+            {f} ({f === 'all' ? adsList.length : adsList.filter(a => a.status === f).length})
           </button>
         ))}
       </div>
@@ -58,7 +57,7 @@ export default function AdminAds() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusClasses[ad.status]}`}>{ad.status}</span>
                   </div>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{ad.email} &middot; {ad.phone}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{ad.adType} &middot; {ad.duration} &middot; {ad.period === '1month' ? '1 Month' : '2 Months'}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{ad.adType} &middot; {ad.duration.replace(/_/g, ' ')} &middot; {ad.period === '1_month' ? '1 Month' : '2 Months'}</p>
                   <p className="font-mono text-sm font-bold mt-1" style={{ color: 'var(--primary)' }}>N{ad.totalPrice.toLocaleString()}</p>
                   {ad.rejectionReason && <p className="text-xs mt-1" style={{ color: 'var(--danger)' }}>Reason: {ad.rejectionReason}</p>}
                 </div>
@@ -67,7 +66,7 @@ export default function AdminAds() {
                 <button onClick={() => setPreview(ad)} className="btn-secondary flex-1 py-2 text-xs flex items-center justify-center gap-1">
                   <Eye size={14} /> View
                 </button>
-                {ad.status === 'pending' && (
+                {ad.status === 'pending_review' && (
                   <>
                     <button onClick={() => handleApprove(ad.id)} className="flex-1 py-2 rounded-lg text-xs font-medium text-white flex items-center justify-center gap-1" style={{ background: 'var(--success)' }}>
                       <CheckCircle size={14} /> Approve

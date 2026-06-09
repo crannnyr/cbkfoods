@@ -1,29 +1,28 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
-import { BANNERS } from '@/lib/data';
 import type { Banner } from '@/types';
 import AdminLayout from './AdminLayout';
 import ImageUploader from '@/components/ImageUploader';
 import { useStore } from '@/store/useStore';
 
 export default function AdminBanners() {
-  const { addToast } = useStore();
-  const [banners, setBanners] = useState<Banner[]>(BANNERS);
+  const { addToast, banners } = useStore();
+  const [bannersList, setBannersList] = useState<Banner[]>(banners);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Banner | null>(null);
   const [form, setForm] = useState({ title: '', subtitle: '', targetType: 'category' as 'category' | 'external', targetValue: '', displayOrder: 1, isActive: true });
 
   const openAdd = () => {
-    setEditing(null); setForm({ title: '', subtitle: '', targetType: 'category', targetValue: '', displayOrder: banners.length + 1, isActive: true }); setShowModal(true);
+    setEditing(null); setForm({ title: '', subtitle: '', targetType: 'category', targetValue: '', displayOrder: bannersList.length + 1, isActive: true }); setShowModal(true);
   };
   const openEdit = (b: Banner) => { setEditing(b); setForm({ title: b.title, subtitle: b.subtitle, targetType: b.targetType, targetValue: b.targetValue, displayOrder: b.displayOrder, isActive: b.isActive }); setShowModal(true); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
-      setBanners(bs => bs.map(b => b.id === editing.id ? { ...b, ...form } : b));
+      setBannersList(bs => bs.map(b => b.id === editing.id ? { ...b, ...form } : b));
     } else {
-      setBanners(bs => [...bs, { id: `new-${Date.now()}`, ...form, mediaUrl: '/images/hero-banner.jpg', mediaType: 'image', activeStart: '2026-01-01', activeEnd: '2026-12-31' }]);
+      setBannersList(bs => [...bs, { id: `new-${Date.now()}`, ...form, mediaUrl: '/images/hero-banner.jpg', mediaType: 'image' }]);
     }
     setShowModal(false);
     addToast('success', editing ? 'Banner updated' : 'Banner created');
@@ -32,12 +31,12 @@ export default function AdminBanners() {
   return (
     <AdminLayout title="Hero Banners">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{banners.length} banners</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{bannersList.length} banners</p>
         <button onClick={openAdd} className="btn-primary flex items-center gap-2 py-2.5 px-4"><Plus size={16} /> Add Banner</button>
       </div>
 
       <div className="space-y-3">
-        {banners.map(b => (
+        {bannersList.map(b => (
           <div key={b.id} className="card p-4 flex items-center gap-4">
             <img src={b.mediaUrl} alt={b.title} className="w-24 h-16 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -51,7 +50,7 @@ export default function AdminBanners() {
             <div className="flex items-center gap-1 flex-shrink-0">
               <button onClick={() => addToast('info', 'Preview coming soon')} className="p-1.5 rounded-lg hover:bg-white/5"><Eye size={14} style={{ color: 'var(--text-muted)' }} /></button>
               <button onClick={() => openEdit(b)} className="p-1.5 rounded-lg hover:bg-white/5"><Pencil size={14} style={{ color: 'var(--text-muted)' }} /></button>
-              <button onClick={() => setBanners(bs => bs.filter(x => x.id !== b.id))} className="p-1.5 rounded-lg hover:bg-red-500/10"><Trash2 size={14} style={{ color: 'var(--danger)' }} /></button>
+              <button onClick={() => setBannersList(bs => bs.filter(x => x.id !== b.id))} className="p-1.5 rounded-lg hover:bg-red-500/10"><Trash2 size={14} style={{ color: 'var(--danger)' }} /></button>
             </div>
           </div>
         ))}

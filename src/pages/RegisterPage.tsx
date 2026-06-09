@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const { register, addToast } = useStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -16,15 +17,17 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || !confirmPw) { addToast('error', 'Please fill in all fields'); return; }
+    if (!name || !email || !phone || !password || !confirmPw) { addToast('error', 'Please fill in all fields'); return; }
     if (password.length < 6) { addToast('error', 'Password must be at least 6 characters'); return; }
     if (password !== confirmPw) { addToast('error', 'Passwords do not match'); return; }
     setLoading(true);
-    const success = await register(name, email, password);
+    const success = await register(name, email, password, phone);
     setLoading(false);
     if (success) {
       addToast('success', 'Account created! Welcome to CBK Foods');
       navigate('/');
+    } else {
+      addToast('error', 'Failed to create account. Please try again.');
     }
   };
 
@@ -55,6 +58,14 @@ export default function RegisterPage() {
             </div>
           </div>
           <div>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Phone Number</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-muted)' }} />
+              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
+                className="input-field pl-10" placeholder="08012345678" />
+            </div>
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-muted)' }} />
@@ -70,7 +81,7 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Confirm Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-muted)' }} />
-              <input type={password} required value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+              <input type={showPw ? 'text' : 'password'} required value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
                 className="input-field pl-10" placeholder="Confirm your password" />
             </div>
           </div>
